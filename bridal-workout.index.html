@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>完美新娘婚禮雕塑訓練計時器</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        rose: {
+                            50: '#fff1f2',
+                            100: '#ffe4e6',
+                            200: '#fecdd3',
+                            300: '#fda4af',
+                            400: '#fb7185',
+                            500: '#f43f5e',
+                            600: '#e11d48',
+                            800: '#9f1239',
+                        },
+                        gold: {
+                            100: '#fdf8ec',
+                            300: '#f3e3b3',
+                            500: '#d4af37',
+                            600: '#aa820a',
+                        },
+                        luxury: '#2b1b17',
+                    },
+                    fontFamily: {
+                        serif: ['"Noto Serif TC"', 'serif'],
+                        sans: ['Poppins', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #1f1412 0%, #2b1b17 50%, #150d0a 100%);
+            color: #f8fafc;
+            font-family: 'Poppins', 'Noto Serif TC', sans-serif;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+        }
+        .gold-gradient-text {
+            background: linear-gradient(135deg, #fff2d3 0%, #d4af37 50%, #f3e3b3 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .gold-button {
+            background: linear-gradient(135deg, #e6ca65 0%, #d4af37 50%, #b38f24 100%);
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+        }
+        .gold-button:active {
+            transform: scale(0.97);
+        }
+        .pulse-ring {
+            box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.6);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.6); }
+            70% { box-shadow: 0 0 0 20px rgba(244, 63, 94, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(244, 63, 94, 0); }
+        }
+        /* Hide scrollbars but keep functionality */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between p-4 max-w-md mx-auto relative overflow-x-hidden">
+
+    <!-- Header Section -->
+    <header class="text-center pt-2 pb-3 border-b border-gold-500/20">
+        <div class="flex items-center justify-between mb-1">
+            <span class="text-xs tracking-widest text-gold-300 font-serif uppercase">BRIDAL SCULPTING</span>
+            <div class="flex items-center gap-2">
+                <button id="btnVoiceToggle" onclick="toggleVoice()" class="text-gold-300/80 hover:text-gold-300 p-1">
+                    <i id="iconVoice" class="fas fa-volume-up text-sm"></i>
+                </button>
+                <button id="btnBpmToggle" onclick="toggleBpmSound()" class="text-gold-300/80 hover:text-gold-300 p-1">
+                    <i id="iconBpm" class="fas fa-drum text-sm"></i>
+                </button>
+            </div>
+        </div>
+        <h1 class="text-xl font-bold font-serif gold-gradient-text tracking-wide">完美新娘婚禮雕塑訓練</h1>
+    </header>
+
+    <!-- Main Navigation / Stage Selection Modal -->
+    <div id="stageSelector" class="my-3 grid grid-cols-4 gap-1.5 text-center text-xs font-medium">
+        <button onclick="selectStage(0)" id="stageBtn0" class="py-2 px-1 rounded-lg glass-card border-gold-500/50 text-gold-300 font-bold transition-all">1.暖身</button>
+        <button onclick="selectStage(1)" id="stageBtn1" class="py-2 px-1 rounded-lg glass-card opacity-60 text-gray-300 transition-all">2.正訓</button>
+        <button onclick="selectStage(2)" id="stageBtn2" class="py-2 px-1 rounded-lg glass-card opacity-60 text-gray-300 transition-all">3.有氧</button>
+        <button onclick="selectStage(3)" id="stageBtn3" class="py-2 px-1 rounded-lg glass-card opacity-60 text-gray-300 transition-all">4.伸展</button>
+    </div>
+
+    <!-- Mode Selector Modal Layer (Hidden by default, shown for Strength & Cardio choice) -->
+    <div id="selectionOverlay" class="hidden glass-card rounded-2xl p-5 my-auto text-center border-2 border-gold-500/40 z-30 shadow-2xl">
+        <h2 id="selectionTitle" class="text-lg font-bold font-serif gold-gradient-text mb-3">請選擇訓練模式</h2>
+        <div id="selectionOptions" class="space-y-3">
+            <!-- Dynamic Options Injected Here -->
+        </div>
+    </div>
+
+    <!-- Timer Display Container -->
+    <main id="timerContainer" class="flex-1 flex flex-col justify-between my-2">
+        
+        <!-- Status & Badge Area -->
+        <div class="text-center space-y-2">
+            <div id="statusBadge" class="inline-block px-3 py-1 rounded-full text-xs font-semibold tracking-wider bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                動態暖身 5分鐘
+            </div>
+            
+            <div id="setIndicator" class="text-xs text-gold-300/80 font-mono tracking-widest min-h-[18px]">
+                動作 1 / 5
+            </div>
+        </div>
+
+        <!-- Central Circle Display -->
+        <div class="relative w-64 h-64 mx-auto my-3 flex items-center justify-center">
+            <!-- Circular Progress SVG -->
+            <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="44" stroke="currentColor" stroke-width="4" class="text-white/10" fill="transparent"/>
+                <circle id="progressCircle" cx="50" cy="50" r="44" stroke="currentColor" stroke-width="5" class="text-rose-400 transition-all duration-300" fill="transparent" stroke-dasharray="276.46" stroke-dashoffset="0" stroke-linecap="round"/>
+            </svg>
+            
+            <!-- Countdown Number inside circle -->
+            <div class="absolute inset-0 flex flex-col items-center justify-center text-center p-2">
+                <span id="restLabel" class="text-xs text-rose-300 uppercase tracking-widest font-semibold hidden">Resting 休息</span>
+                <span id="timerDisplay" class="text-6xl font-extrabold font-mono text-white tracking-tighter my-1 drop-shadow-md">00:45</span>
+                <span id="totalTimeDisplay" class="text-xs text-gray-400 font-mono">總剩餘: 05:00</span>
+            </div>
+        </div>
+
+        <!-- Exercise Details Box -->
+        <div class="glass-card rounded-2xl p-4 space-y-2 border-gold-500/30 shadow-lg min-h-[130px] flex flex-col justify-center">
+            <h3 id="actionName" class="text-lg font-bold text-center gold-gradient-text font-serif">肩膀大繞環</h3>
+            <p id="actionGuide" class="text-xs text-gray-200 text-center leading-relaxed font-light">
+                <span class="text-gold-300 font-semibold">【要領】</span> 鬆開緊繃肩頸，改善圓肩體態。保持平穩呼吸。
+            </p>
+            <p id="actionFocus" class="text-[11px] text-rose-300/90 text-center italic">
+                ✨ 婚紗雕塑重點：展現優雅鎖骨與美背線條
+            </p>
+        </div>
+
+    </main>
+
+    <!-- Control Buttons -->
+    <footer class="space-y-3 pt-2">
+        <div class="flex items-center justify-center gap-4">
+            <!-- Reset Button -->
+            <button onclick="resetTimer()" class="w-12 h-12 rounded-full glass-card flex items-center justify-center text-gray-300 hover:text-white border-gold-500/30 active:scale-95 transition-all">
+                <i class="fas fa-redo-alt"></i>
+            </button>
+
+            <!-- Main Play / Pause Button -->
+            <button id="btnPlay" onclick="togglePlay()" class="w-20 h-20 rounded-full gold-button flex items-center justify-center text-luxury text-2xl shadow-xl active:scale-95 transition-all pulse-ring">
+                <i id="playIcon" class="fas fa-play ml-1"></i>
+            </button>
+
+            <!-- Skip Action Button -->
+            <button onclick="skipNext()" class="w-12 h-12 rounded-full glass-card flex items-center justify-center text-gray-300 hover:text-white border-gold-500/30 active:scale-95 transition-all">
+                <i class="fas fa-forward"></i>
+            </button>
+        </div>
+
+        <!-- Quick Switch Options / Tips Footer -->
+        <div class="text-center pt-1">
+            <p id="footerTip" class="text-[10px] text-gray-400/80">點擊播放鍵啟動專屬新娘訓練，配戴耳機效果更佳</p>
+        </div>
+    </footer>
+
+    <script>
+        /* --- WORKOUT DATA STRUCTURE --- */
+        const workoutData = [
+            {
+                id: 'warmup',
+                title: '1. 動態暖身',
+                defaultDuration: 300,
+                items: [
+                    { name: "肩膀大繞環", duration: 45, rest: 40, guide: "鬆開緊繃肩頸，雙臂流暢往後繞環，改善圓肩體態。", focus: "修飾肩頸線條，打造站姿挺拔" },
+                    { name: "徒手慢速深蹲", duration: 45, rest: 40, guide: "活化下肢肌肉與髖關節，臀部向後下坐，提升體溫。", focus: "啟動臀肌，穩定挺胸" },
+                    { name: "原地高抬膝踏步", duration: 45, rest: 40, guide: "促進血液循環，膝蓋抬至髖部高度，預防運動傷害。", focus: "提升心肺與核心穩定" },
+                    { name: "身體左右轉體", duration: 45, rest: 40, guide: "活化胸椎與核心腰椎活動度，雙手自然擺動。", focus: "鬆開緊繃腰背" },
+                    { name: "貓狗式伸展", duration: 45, rest: 40, guide: "伸展脊椎，吸氣凹背抬頭，吐氣拱背圓肩，舒緩背部緊繃。", focus: "釋放脊椎壓力，雕塑美背" }
+                ],
+                transitionSpeech: "動態暖身結束，準備開始重量訓練",
+                transitionRest: 60
+            },
+            {
+                id: 'strength',
+                title: '2. 精準正訓',
+                subOptions: [
+                    {
+                        id: 'upper',
+                        name: '上半身與核心雕塑 (25分鐘)',
+                        items: [
+                            { name: "水瓶俯身划船", duration: 45, rest: 45, sets: 4, guide: "背部收緊發力，手肘往後上方帶，夾緊肩胛骨。", focus: "消滅副乳、緊實後背線條 (大露背/卡肩款)" },
+                            { name: "椅子反向臂屈伸", duration: 45, rest: 45, sets: 3, guide: "雙手撐在穩固椅子邊緣，下放時手肘不外翻。", focus: "告別雙手掰掰袖 (細肩帶/無袖款)" },
+                            { name: "水瓶側平舉", duration: 45, rest: 45, sets: 3, guide: "動作放慢，用肩膀力量將水瓶往兩側抬起至平行地面。", focus: "打造直角肩、凸顯立體鎖骨 (平口/桃心領)" },
+                            { name: "跪姿伏地挺身", duration: 45, rest: 45, sets: 3, guide: "膝蓋著地，核心收緊，胸口下壓接近地面。", focus: "胸部上挺、修飾副乳視覺線條" },
+                            { name: "死蟲式 (Dead Bug)", duration: 45, rest: 30, sets: 3, guide: "平躺且下背緊貼地面，手腳交叉緩慢延伸。", focus: "平坦小腹、強化深層核心" }
+                        ]
+                    },
+                    {
+                        id: 'lower',
+                        name: '每週下半身雕塑微調 (25分鐘)',
+                        items: [
+                            { name: "徒手深蹲", duration: 45, rest: 45, sets: 4, guide: "雙腳與肩同寬，臀部向後坐，重心放在腳跟。", focus: "鍛鍊大腿與臀部基礎線條，翹臀挺拔" },
+                            { name: "箭步蹲 (交替)", duration: 45, rest: 45, sets: 3, guide: "跨步下蹲至雙膝約90度，軀幹保持直立。", focus: "緊實大腿前後側，優化腿部比例" },
+                            { name: "橋式臀推", duration: 45, rest: 30, sets: 4, guide: "平躺雙腳踩地，發力抬起臀部至頂點擠壓臀肌。", focus: "打造蜜桃臀，視覺拉長腿部線條" },
+                            { name: "站姿側抬腿", duration: 45, rest: 30, sets: 3, guide: "核心收緊，保持身體不歪斜，臀中肌發力往側邊抬腿。", focus: "修飾臀部兩側凹陷，打造完美腰臀比" }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 'cardio',
+                title: '3. 高效有氧',
+                subOptions: [
+                    {
+                        id: 'slow_run',
+                        name: '選項A：無痛超慢跑 (180 BPM 節拍)',
+                        type: 'continuous',
+                        duration: 1200, // 20 mins
+                        items: [
+                            { name: "無痛超慢跑 (180 BPM)", duration: 1200, rest: 0, guide: "跟著 180 BPM 節拍。腳尖先著地、膝蓋微彎維持彈性，原地輕跑。", focus: "高效率燃脂，完全無噪音保護關節" }
+                        ]
+                    },
+                    {
+                        id: 'hiit_circuit',
+                        name: '選項B：徒手輕有氧循環 (4動作x4組)',
+                        items: [
+                            { name: "快速原地踏步", duration: 45, rest: 15, sets: 4, guide: "雙手大力擺動，保持節奏快速踏步。", focus: "快速提升心率，全身燃脂" },
+                            { name: "左右側步蹲", duration: 45, rest: 15, sets: 4, guide: "左右橫移側步蹲，同時雙手用力推胸。", focus: "消耗熱量同時鍛鍊胸背" },
+                            { name: "拳擊左右直拳", duration: 45, rest: 15, sets: 4, guide: "站穩腳步，核心出力，快速交替出直拳。", focus: "緊實手臂與腰腹旋轉肌肉" },
+                            { name: "站姿膝碰肘", duration: 45, rest: 15, sets: 4, guide: "對角線抬膝與手肘相碰，核心深層收縮。", focus: "鍛鍊側腹，精雕腰線" }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: 'stretch',
+                title: '4. 靜態伸展',
+                defaultDuration: 600,
+                items: [
+                    { name: "胸廓與前肩大伸展", duration: 45, rest: 15, guide: "雙手背後扣緊展開胸廓，配合深呼吸，感覺緊繃即可，不憋氣。", focus: "修正駝背圓肩，婚禮當天站姿挺拔優雅" },
+                    { name: "三頭肌與側體伸展", duration: 45, rest: 15, guide: "一臂扣於頭後拉伸三頭肌，身體微微側彎。", focus: "拉長手臂與側腰肌肉線條" },
+                    { name: "嬰兒式背部放縮", duration: 45, rest: 15, guide: "跪姿臀部坐向腳跟，雙手向前延伸，額頭貼地。", focus: "舒緩全背與下背壓力" },
+                    { name: "下半身臀大肌伸展", duration: 45, rest: 15, guide: "平躺一腿跨於另一腿上，抱住大腿拉向胸口。", focus: "放鬆臀部與大腿深層肌群" }
+                ]
+            }
+        ];
+
+        /* --- STATE VARIABLES --- */
+        let currentStageIdx = 0;
+        let currentSubOptionIdx = 0;
+        let currentItemIdx = 0;
+        let currentSet = 1;
+        let isResting = false;
+        let isRunning = false;
+        let timer = null;
+        let timeRemaining = 0;
+        let currentMaxTime = 45;
+        let enableVoice = true;
+        let enableBpmSound = true;
+        
+        // Expanded flat playlist for active routine
+        let activePlaylist = [];
+        let activePlaylistIdx = 0;
+
+        /* --- AUDIO SYNTHESIS & SPEECH --- */
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playBeep(freq = 800, type = 'sine', duration = 0.1) {
+            if (!enableBpmSound) return;
+            try {
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + duration);
+            } catch(e) { console.error(e); }
+        }
+
+        // Web Speech Synth
+        function speak(text) {
+            if (!enableVoice || !('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel(); // Stop previous voice
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'zh-TW';
+            utterance.rate = 1.0;
+            utterance.pitch = 1.0;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function toggleVoice() {
+            enableVoice = !enableVoice;
+            const icon = document.getElementById('iconVoice');
+            icon.className = enableVoice ? "fas fa-volume-up text-sm" : "fas fa-volume-mute text-sm text-gray-500";
+            if(enableVoice) speak("語音提醒已開啟");
+        }
+
+        function toggleBpmSound() {
+            enableBpmSound = !enableBpmSound;
+            const icon = document.getElementById('iconBpm');
+            icon.className = enableBpmSound ? "fas fa-drum text-sm" : "fas fa-drum text-sm text-gray-500";
+        }
+
+        /* --- ROUTINE PLAYLIST BUILDER --- */
+        function buildPlaylist() {
+            activePlaylist = [];
+            const stage = workoutData[currentStageIdx];
+
+            let itemsToUse = [];
+            if (stage.subOptions) {
+                itemsToUse = stage.subOptions[currentSubOptionIdx].items;
+            } else {
+                itemsToUse = stage.items;
+            }
+
+            itemsToUse.forEach((item) => {
+                const totalSets = item.sets || 1;
+                for (let s = 1; s <= totalSets; s++) {
+                    // Action segment
+                    activePlaylist.push({
+                        type: 'action',
+                        name: item.name,
+                        duration: item.duration,
+                        guide: item.guide,
+                        focus: item.focus,
+                        set: s,
+                        totalSets: totalSets
+                    });
+                    // Rest segment (if rest > 0)
+                    if (item.rest > 0) {
+                        activePlaylist.push({
+                            type: 'rest',
+                            name: `休息 & 換動作`,
+                            duration: item.rest,
+                            guide: `深呼吸放鬆，準備下一個動作：${item.name}`,
+                            focus: `為下一組訓練做準備`,
+                            set: s,
+                            totalSets: totalSets
+                        });
+                    }
+                }
+            });
+
+            // Add Stage Transition if applicable
+            if (stage.transitionRest) {
+                activePlaylist.push({
+                    type: 'transition',
+                    name: '轉場準備',
+                    duration: stage.transitionRest,
+                    guide: stage.transitionSpeech,
+                    focus: '請整理呼吸，準備進入重量訓練',
+                    set: 1,
+                    totalSets: 1
+                });
+            }
+
+            activePlaylistIdx = 0;
+            loadPlaylistItem(0);
+        }
+
+        function loadPlaylistItem(idx) {
+            if (idx >= activePlaylist.length) {
+                // Stage complete
+                stageComplete();
+                return;
+            }
+
+            const current = activePlaylist[idx];
+            isResting = current.type !== 'action';
+            timeRemaining = current.duration;
+            currentMaxTime = current.duration;
+
+            // UI updates
+            document.getElementById('actionName').innerText = current.name;
+            document.getElementById('actionGuide').innerHTML = `<span class="text-gold-300 font-semibold">【要領】</span> ${current.guide}`;
+            document.getElementById('actionFocus').innerText = `✨ 婚紗雕塑重點：${current.focus}`;
+            
+            const restLabel = document.getElementById('restLabel');
+            if (isResting) {
+                restLabel.classList.remove('hidden');
+                document.getElementById('statusBadge').innerText = "休息中 REST";
+                document.getElementById('statusBadge').className = "inline-block px-3 py-1 rounded-full text-xs font-semibold tracking-wider bg-gold-500/20 text-gold-300 border border-gold-500/30";
+            } else {
+                restLabel.classList.add('hidden');
+                document.getElementById('statusBadge').innerText = workoutData[currentStageIdx].title;
+                document.getElementById('statusBadge').className = "inline-block px-3 py-1 rounded-full text-xs font-semibold tracking-wider bg-rose-500/20 text-rose-300 border border-rose-500/30";
+            }
+
+            if (current.totalSets > 1) {
+                document.getElementById('setIndicator').innerText = `第 ${current.set} / ${current.totalSets} 組`;
+            } else {
+                document.getElementById('setIndicator').innerText = `進度 ${idx + 1} / ${activePlaylist.length}`;
+            }
+
+            updateTimerDisplay();
+
+            // Speech Voice trigger
+            if (isRunning) {
+                if (current.type === 'action') {
+                    speak(`${current.name}。${current.guide}`);
+                } else if (current.type === 'transition') {
+                    speak(current.guide);
+                } else {
+                    speak("休息時間，深呼吸");
+                }
+            }
+        }
+
+        /* --- TIMER ENGINE --- */
+        function togglePlay() {
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            isRunning = !isRunning;
+            const playIcon = document.getElementById('playIcon');
+            const btnPlay = document.getElementById('btnPlay');
+
+            if (isRunning) {
+                playIcon.className = "fas fa-pause";
+                btnPlay.classList.add("ring-4", "ring-rose-400/50");
+                startTimerLoop();
+                // Speak current item guide on play start
+                const current = activePlaylist[activePlaylistIdx];
+                if (current && current.type === 'action') {
+                    speak(`${current.name}。${current.guide}`);
+                }
+            } else {
+                playIcon.className = "fas fa-play ml-1";
+                btnPlay.classList.remove("ring-4", "ring-rose-400/50");
+                clearInterval(timer);
+                if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            }
+        }
+
+        function startTimerLoop() {
+            clearInterval(timer);
+            timer = setInterval(() => {
+                if (timeRemaining > 0) {
+                    timeRemaining--;
+                    updateTimerDisplay();
+
+                    // Sound effects (Metronome / Bpm)
+                    if (timeRemaining <= 3 && timeRemaining > 0) {
+                        playBeep(1000, 'triangle', 0.15); // Countdown warning
+                    } else if (!isResting) {
+                        playBeep(600, 'sine', 0.05); // Metronome click
+                    }
+                } else {
+                    // Current step finished
+                    playBeep(1200, 'sine', 0.3); // Step complete chime
+                    activePlaylistIdx++;
+                    if (activePlaylistIdx < activePlaylist.length) {
+                        loadPlaylistItem(activePlaylistIdx);
+                    } else {
+                        clearInterval(timer);
+                        stageComplete();
+                    }
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            // Minutes and Seconds
+            const m = Math.floor(timeRemaining / 60).toString().padStart(2, '0');
+            const s = (timeRemaining % 60).toString().padStart(2, '0');
+            document.getElementById('timerDisplay').innerText = `${m}:${s}`;
+
+            // Calculate total time remaining for stage
+            let totalRem = timeRemaining;
+            for (let i = activePlaylistIdx + 1; i < activePlaylist.length; i++) {
+                totalRem += activePlaylist[i].duration;
+            }
+            const tm = Math.floor(totalRem / 60).toString().padStart(2, '0');
+            const ts = (totalRem % 60).toString().padStart(2, '0');
+            document.getElementById('totalTimeDisplay').innerText = `階段剩餘: ${tm}:${ts}`;
+
+            // SVG Circle Progress
+            const progressCircle = document.getElementById('progressCircle');
+            const circumference = 276.46; // 2 * pi * 44
+            const offset = circumference - (timeRemaining / currentMaxTime) * circumference;
+            progressCircle.style.strokeDashoffset = offset;
+        }
+
+        function skipNext() {
+            if (activePlaylistIdx < activePlaylist.length - 1) {
+                activePlaylistIdx++;
+                loadPlaylistItem(activePlaylistIdx);
+            } else {
+                stageComplete();
+            }
+        }
+
+        function resetTimer() {
+            isRunning = false;
+            clearInterval(timer);
+            document.getElementById('playIcon').className = "fas fa-play ml-1";
+            document.getElementById('btnPlay').classList.remove("ring-4", "ring-rose-400/50");
+            loadPlaylistItem(activePlaylistIdx);
+        }
+
+        function stageComplete() {
+            isRunning = false;
+            clearInterval(timer);
+            document.getElementById('playIcon').className = "fas fa-play ml-1";
+            speak("恭喜您完成本階段訓練！完美新娘，繼續保持！");
+
+            if (currentStageIdx < workoutData.length - 1) {
+                setTimeout(() => {
+                    selectStage(currentStageIdx + 1);
+                }, 2000);
+            } else {
+                document.getElementById('actionName').innerText = "🎉 全套訓練結束！";
+                document.getElementById('actionGuide').innerText = "太棒了！您離完美婚禮體態又近了一步！";
+                document.getElementById('actionFocus').innerText = "記得補充水分與優質蛋白質哦！";
+            }
+        }
+
+        /* --- STAGE & MODE SELECTION --- */
+        function selectStage(stageIdx) {
+            currentStageIdx = stageIdx;
+            
+            // Highlight stage tabs
+            for (let i = 0; i < 4; i++) {
+                const btn = document.getElementById(`stageBtn${i}`);
+                if (i === stageIdx) {
+                    btn.className = "py-2 px-1 rounded-lg glass-card border-gold-500/80 text-gold-300 font-bold shadow-lg transition-all";
+                } else {
+                    btn.className = "py-2 px-1 rounded-lg glass-card opacity-50 text-gray-300 transition-all";
+                }
+            }
+
+            const stage = workoutData[stageIdx];
+
+            // If sub-options exist (Strength or Cardio)
+            if (stage.subOptions) {
+                showSubOptionsOverlay(stage);
+            } else {
+                document.getElementById('selectionOverlay').classList.add('hidden');
+                document.getElementById('timerContainer').classList.remove('hidden');
+                currentSubOptionIdx = 0;
+                buildPlaylist();
+            }
+        }
+
+        function showSubOptionsOverlay(stage) {
+            const overlay = document.getElementById('selectionOverlay');
+            const title = document.getElementById('selectionTitle');
+            const optionsContainer = document.getElementById('selectionOptions');
+
+            title.innerText = stage.title + "：請選擇訓練項目";
+            optionsContainer.innerHTML = '';
+
+            stage.subOptions.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = "w-full py-3.5 px-4 rounded-xl glass-card border border-gold-500/40 text-gold-200 hover:text-white font-medium text-sm flex items-center justify-between active:scale-98 transition-all";
+                btn.innerHTML = `<span>${opt.name}</span><i class="fas fa-chevron-right text-xs text-gold-500"></i>`;
+                btn.onclick = () => {
+                    currentSubOptionIdx = idx;
+                    overlay.classList.add('hidden');
+                    document.getElementById('timerContainer').classList.remove('hidden');
+                    buildPlaylist();
+                };
+                optionsContainer.appendChild(btn);
+            });
+
+            document.getElementById('timerContainer').classList.add('hidden');
+            overlay.classList.remove('hidden');
+        }
+
+        // Initialize App on Load
+        window.onload = function() {
+            selectStage(0);
+        };
+    </script>
+</body>
+</html>
